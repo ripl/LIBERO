@@ -25,6 +25,7 @@ def postprocess_model_xml(xml_str, cameras_dict={}):
 
     path = os.path.split(robosuite.__file__)[0]
     path_split = path.split("/")
+    assets_root = os.path.join(os.path.dirname(DIR), "assets")
 
     # replace mesh and texture file paths
     tree = ET.fromstring(xml_str)
@@ -39,14 +40,20 @@ def postprocess_model_xml(xml_str, cameras_dict={}):
         if old_path is None:
             continue
         old_path_split = old_path.split("/")
-        if "robosuite" not in old_path_split:
-            continue
-        ind = max(
-            loc for loc, val in enumerate(old_path_split) if val == "robosuite"
-        )  # last occurrence index
-        new_path_split = path_split + old_path_split[ind + 1 :]
-        new_path = "/".join(new_path_split)
-        elem.set("file", new_path)
+        if "robosuite" in old_path_split:
+            ind = max(
+                loc for loc, val in enumerate(old_path_split) if val == "robosuite"
+            )
+            new_path_split = path_split + old_path_split[ind + 1 :]
+            new_path = "/".join(new_path_split)
+            elem.set("file", new_path)
+        elif "chiliocosm" in old_path_split and "assets" in old_path_split:
+            ind = max(
+                loc for loc, val in enumerate(old_path_split) if val == "assets"
+            )
+            rel_parts = old_path_split[ind + 1 :]
+            new_path = os.path.join(assets_root, *rel_parts)
+            elem.set("file", new_path)
 
     # cameras = root.find("worldbody").findall("camera")
     cameras = find_elements(root=tree, tags="camera", return_first=False)
